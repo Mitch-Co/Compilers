@@ -95,28 +95,54 @@ identifier = {letter}+
    This section contains regular expressions and actions, i.e. Java
    code, that will be executed when the scanner matches the associated
    regular expression. */
-   
+
+
+/* C- KEYWORDS */
+
 "if"               { return symbol(sym.IF); }
-"then"             { return symbol(sym.THEN); }
 "else"             { return symbol(sym.ELSE); }
-"end"              { return symbol(sym.END); }
-"repeat"           { return symbol(sym.REPEAT); }
-"until"            { return symbol(sym.UNTIL); }
-"read"             { return symbol(sym.READ); }
-"write"            { return symbol(sym.WRITE); }
-":="               { return symbol(sym.ASSIGN); }
-"="                { return symbol(sym.EQ); }
-"<"                { return symbol(sym.LT); }
-">"                { return symbol(sym.GT); }
+"while"            { return symbol(sym.WHILE); }
+
+"int"              { return symbol(sym.INT); }
+"void"             { return symbol(sym.VOID); }
+
+"return"           { return symbol(sym.RETURN); }
+
+/* SPECIAL SYMBOLS */
+
 "+"                { return symbol(sym.PLUS); }
 "-"                { return symbol(sym.MINUS); }
 "*"                { return symbol(sym.TIMES); }
 "/"                { return symbol(sym.OVER); }
-"("                { return symbol(sym.LPAREN); }
-")"                { return symbol(sym.RPAREN); }
+
+"<"                { return symbol(sym.LT); }
+">"                { return symbol(sym.GT); }
+"<="               { return symbol(sym.LTEQ); }
+">="               { return symbol(sym.GTEQ); }
+"!="               { return symbol(sym.NOTEQ); }
+"=="               { return symbol(sym.EQUALS); }
+
+"="                { return symbol(sym.ASSIGN); }
 ";"                { return symbol(sym.SEMI); }
+","                { return symbol(sym.COMMA); }
+
+"("                { return symbol(sym.LCURVED); }
+")"                { return symbol(sym.RCURVED); }
+"["                { return symbol(sym.LSQUARE); }
+"]"                { return symbol(sym.RSQUARE); }
+"{"                { return symbol(sym.LSQUIG); }
+"}"                { return symbol(sym.RSQUIG); }
+
+
+/* OTHER TOKENS */
+
 {number}           { return symbol(sym.NUM, yytext()); }
 {identifier}       { return symbol(sym.ID, yytext()); }
+
+
+/* COMMENTS, WHITESPACE, AND UNKNOWN PATTERNS */
 {WhiteSpace}+      { /* skip whitespace */ }   
 "{"[^\}]*"}"       { /* skip comments */ }
+
+/* TODO: DISPLAY ERROR HERE */
 .                  { return symbol(sym.ERROR); }

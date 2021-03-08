@@ -71,19 +71,15 @@ parser code {:
    
 /* ------------Declaration of Terminals and Non Terminals Section----------- */
    
-terminal IF, THEN, ELSE, END, REPEAT, UNTIL, READ, WRITE;
-terminal ASSIGN, EQ, LT, GT, PLUS, MINUS, TIMES, OVER, LPAREN, RPAREN, SEMI;
+terminal IF, ELSE, WHILE, INT, VOID, RETURN,  ;
+terminal PLUS, MINUS, TIMES, OVER, LT, GT, LTEQ, GTEQ, NOTEQ, EQUALS, ASSIGN, SEMI, COMMA, LCURVED, RCURVED, LSQUARE, RSQUARE, LSQUIG, RSQUIG;
 terminal String ID, NUM;
 terminal ERROR;
    
 non terminal Exp program1;
 non terminal ExpList program, stmt_seq;
 non terminal Exp stmt, if_stmt, repeat_stmt, assign_stmt, read_stmt, write_stmt;
-non terminal Exp exp;   
-
-precedence nonassoc LT, GT, EQ;
-precedence left PLUS, MINUS;
-precedence left TIMES, OVER;
+non terminal Exp exp, simple_exp, term, factor;   
 
 /* ----------------------------Grammar Section-------------------- */
    
@@ -146,21 +142,33 @@ write_stmt   ::= WRITE:w exp:e
                  {: RESULT = new WriteExp(wleft, wright, e); :}
                ;
 
-exp          ::= exp:s1 LT exp:s2
+exp          ::= simple_exp:s1 LT simple_exp:s2
                  {: RESULT = new OpExp(s1left, s1right, s1, OpExp.LT, s2); :}
-               | exp:s1 GT exp:s2
+               | simple_exp:s1 GT simple_exp:s2
                  {: RESULT = new OpExp(s1left, s1right, s1, OpExp.GT, s2); :}
-               | exp:s1 EQ exp:s2
+               | simple_exp:s1 EQ simple_exp:s2
                  {: RESULT = new OpExp(s1left, s1right, s1, OpExp.EQ, s2); :}
-               | exp:s PLUS exp:t
+               | simple_exp:s
+                 {: RESULT = s; :}
+               ;
+
+simple_exp   ::= simple_exp:s PLUS term:t
                  {: RESULT = new OpExp(sleft, sright, s, OpExp.PLUS, t); :}
-               | exp:s MINUS exp:t
+               | simple_exp:s MINUS term:t
                  {: RESULT = new OpExp(sleft, sright, s, OpExp.MINUS, t); :}
-               | exp:t TIMES exp:f
+               | term:t
+                 {: RESULT = t; :}
+               ;
+
+term         ::= term:t TIMES factor:f
                  {: RESULT = new OpExp(tleft, tright, t, OpExp.TIMES, f); :}
-               | exp:t OVER exp:f
+               | term:t OVER factor:f
                  {: RESULT = new OpExp(tleft, tright, t, OpExp.OVER, f); :}
-               | LPAREN exp:e RPAREN
+               | factor:f
+                 {: RESULT = f; :}
+               ;
+
+factor       ::= LPAREN exp:e RPAREN
                  {: RESULT = e; :}
                | NUM:n
                  {: RESULT = new IntExp(nleft, nright, n); :}
