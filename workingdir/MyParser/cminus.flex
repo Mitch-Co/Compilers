@@ -14,7 +14,10 @@ import java_cup.runtime.*;
 %%
    
 /* -----------------Options and Declarations Section----------------- */
-   
+
+/* A state for comments to be eaten in */
+%state COMMENT 
+
 /* 
    The name of the class JFlex will create will be Lexer.
    Will write the code to the file Lexer.java. 
@@ -74,19 +77,20 @@ import java_cup.runtime.*;
 LineTerminator = \r|\n|\r\n
    
 /* White space is a line terminator, space, tab, or form feed. */
-WhiteSpace     = {LineTerminator} | [ \t\f]
+WhiteSpace = \s
+
+Comments = \/\*+([^\*])*\*+\/
    
 /* A literal integer is is a number beginning with a number between
    one and nine followed by zero or more numbers between zero and nine
    or just a zero.  */
-digit = [0-9]
-number = {digit}+
+number = [0-9]+
    
 /* A identifier integer is a word beginning a letter between A and
    Z, a and z, or an underscore followed by zero or more letters
    between A and Z, a and z, zero and nine, or an underscore. */
 letter = [a-zA-Z]
-identifier = {letter}+
+identifier = [_a-zA-Z][_a-zA-Z0-9]*
    
 %%
 /* ------------------------Lexical Rules Section---------------------- */
@@ -99,50 +103,53 @@ identifier = {letter}+
 
 /* C- KEYWORDS */
 
-"if"               { return symbol(sym.IF); }
-"else"             { return symbol(sym.ELSE); }
-"while"            { return symbol(sym.WHILE); }
+<YYINITIAL>"if"               { return symbol(sym.IF); }
+<YYINITIAL>"else"             { return symbol(sym.ELSE); }
+<YYINITIAL>"while"            { return symbol(sym.WHILE); }
 
-"int"              { return symbol(sym.INT); }
-"void"             { return symbol(sym.VOID); }
+<YYINITIAL>"int"              { return symbol(sym.INT); }
+<YYINITIAL>"void"             { return symbol(sym.VOID); }
 
-"return"           { return symbol(sym.RETURN); }
+<YYINITIAL>"return"           { return symbol(sym.RETURN); }
 
 /* SPECIAL SYMBOLS */
 
-"+"                { return symbol(sym.PLUS); }
-"-"                { return symbol(sym.MINUS); }
-"*"                { return symbol(sym.TIMES); }
-"/"                { return symbol(sym.OVER); }
+<YYINITIAL>"+"                { return symbol(sym.PLUS); }
+<YYINITIAL>"-"                { return symbol(sym.MINUS); }
+<YYINITIAL>"*"                { return symbol(sym.TIMES); }
+<YYINITIAL>"/"                { return symbol(sym.OVER); }
 
-"<"                { return symbol(sym.LT); }
-">"                { return symbol(sym.GT); }
-"<="               { return symbol(sym.LTEQ); }
-">="               { return symbol(sym.GTEQ); }
-"!="               { return symbol(sym.NOTEQ); }
-"=="               { return symbol(sym.EQUALS); }
+<YYINITIAL>"<"                { return symbol(sym.LT); }
+<YYINITIAL>">"                { return symbol(sym.GT); }
+<YYINITIAL>"<="               { return symbol(sym.LTEQ); }
+<YYINITIAL>">="               { return symbol(sym.GTEQ); }
+<YYINITIAL>"!="               { return symbol(sym.NOTEQ); }
+<YYINITIAL>"=="               { return symbol(sym.EQUALS); }
 
-"="                { return symbol(sym.ASSIGN); }
-";"                { return symbol(sym.SEMI); }
-","                { return symbol(sym.COMMA); }
+<YYINITIAL>"="                { return symbol(sym.ASSIGN); }
+<YYINITIAL>";"                { return symbol(sym.SEMI); }
+<YYINITIAL>","                { return symbol(sym.COMMA); }
 
-"("                { return symbol(sym.LCURVED); }
-")"                { return symbol(sym.RCURVED); }
-"["                { return symbol(sym.LSQUARE); }
-"]"                { return symbol(sym.RSQUARE); }
-"{"                { return symbol(sym.LSQUIG); }
-"}"                { return symbol(sym.RSQUIG); }
+<YYINITIAL>"("                { return symbol(sym.LCURVED); }
+<YYINITIAL>")"                { return symbol(sym.RCURVED); }
+<YYINITIAL>"["                { return symbol(sym.LSQUARE); }
+<YYINITIAL>"]"                { return symbol(sym.RSQUARE); }
+<YYINITIAL>"{"                { return symbol(sym.LSQUIG); }
+<YYINITIAL>"}"                { return symbol(sym.RSQUIG); }
 
 
 /* OTHER TOKENS */
 
-{number}           { return symbol(sym.NUM, yytext()); }
-{identifier}       { return symbol(sym.ID, yytext()); }
+<YYINITIAL>{number}           { return symbol(sym.NUM, yytext()); }
+<YYINITIAL>{identifier}       { return symbol(sym.ID, yytext()); }
 
 
 /* COMMENTS, WHITESPACE, AND UNKNOWN PATTERNS */
-{WhiteSpace}+      { /* skip whitespace */ }   
-"{"[^\}]*"}"       { /* skip comments */ }
+<YYINITIAL>{WhiteSpace}+      { /* skip whitespace */ }   
+
+<YYINITIAL>"/*"               { yybegin(COMMENT);}
+<COMMENT>.|\s                    { /* eat comments */ }
+<COMMENT>"*/"                 { yybegin(YYINITIAL); }
 
 /* TODO: DISPLAY ERROR HERE */
-.                  { return symbol(sym.ERROR); }
+<YYINITIAL>.                  { System.err.println("ERROR: UNKNOWN TOKEN AT LINE " + yyline + " COLUMN " + yycolumn); }

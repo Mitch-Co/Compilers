@@ -77,71 +77,366 @@ terminal EQUALS, ASSIGN, SEMI, COMMA, LCURVED, RCURVED, LSQUARE, RSQUARE, LSQUIG
 terminal String ID, NUM;
 terminal ERROR;
    
-non terminal program, declaration_list, declaration, var_declaration;
-non terminal fun_declaration, type_specifier, compound_stmt, params, param;
-non terminal params_list, local_declarations, statement_list, statement;
-non terminal expression_stmt, selection_stmt, iteration_stmt, return_stmt;
-non terminal expression, var, simple_expression, additive_expression;
-non terminal relop, addop, term, mulop, factor, call, args, arg_list;
+non terminal DecList program, declaration_list, local_declarations;
+non terminal Dec declaration;
+non terminal VarDec var_declaration;
+non terminal FunDec fun_declaration;
+non terminal TypeVal type_specifier;
+
+
+non terminal Statement statement;
+non terminal StatementList statement_list;
+non terminal CompoundStmt compound_stmt;
+non terminal Expression expression_stmt, expression;
+non terminal ParamList params_list,params;
+non terminal Param param;
+non terminal Var var;
+non terminal SimpleExpression simple_expression;
+non terminal AdditiveExpression additive_expression;
+non terminal SelectionStmt selection_stmt;
+non terminal IterationStmt iteration_stmt;
+non terminal ReturnStmt return_stmt; 
+non terminal RelOP relop;
+non terminal AddOP addop;
+non terminal MulOP mulop;
+non terminal Term term;
+non terminal Factor factor;
+non terminal Call call;
+non terminal ArgList args, arg_list; 
+
 
 /* ----------------------------Grammar Section-------------------- */
    
 start with program;
 
-program               ::= declaration_list:dl;
+program               ::= declaration_list:dl
+                        {: 
+                           RESULT = dl; 
+                        :}
+                        ;
 
-declaration_list      ::= declaration_list:dl declaration:d | declaration:d;
+declaration_list      ::= declaration_list:dl declaration:d
+                        {: 
+                           DecList t = dl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new DecList(d, null);
+                           RESULT = dl;
+                        :}
+                        | declaration:d
+                        {: 
+                           RESULT = new DecList(d, null); 
+                        :}
+                        ;
 
-declaration           ::= var_declaration:vd | fun_declaration:fd;
+declaration           ::= var_declaration:vd 
+                        {: 
+                           RESULT = vd; 
+                        :}
+                      | fun_declaration:fd 
+                        {: 
+                           RESULT = fd; 
+                        :}
+                        ;
 
-var_declaration       ::= type_specifier:ts ID:i | type_specifier:ts ID LSQUARE NUM:n RSQUARE;
+var_declaration       ::= type_specifier:ts ID:i SEMI
+                        {: 
+                           RESULT = new VarDec(tsleft, tsright,i, ts, null); 
+                        :}
+                        | type_specifier:ts ID:i LSQUARE NUM:n RSQUARE SEMI
+                        {: 
+                           RESULT = new VarDec(tsleft, tsright,i , ts, new IntVal(nleft,nright,n)); 
+                        :}
+                        ;
 
-type_specifier        ::= INT | VOID;
+type_specifier        ::= INT:i 
+                        {: 
+                           RESULT = new TypeVal(ileft, iright, "INT"); 
+                        :}
+                        | VOID:v
+                        {: 
+                           RESULT = new TypeVal(vleft, vright, "VOID"); 
+                        :}
+                        ;
 
-fun_declaration       ::= type_specifier:ts ID:i LCURVED params:p RCURVED compound_stmt:cs;
+fun_declaration       ::= type_specifier:ts ID:i LCURVED params:p RCURVED compound_stmt:cs
+                        {: 
+                           RESULT = new FunDec(tsleft, tsright,ts, i, p, cs); 
+                        :}
+                        ;
+                        
+params                ::= params_list:pl
+                        {: 
+                           RESULT = pl;
+                        :}
+                        | VOID:v
+                        {: 
+                           RESULT = new ParamList(null, null); 
+                        :}
+                        ;
 
-params                ::= params_list:pl | VOID;
+params_list           ::= params_list:pl COMMA param:p
+                        {: 
+                           ParamList t = pl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new ParamList(p, null);
+                           RESULT = pl;
+                        :}
+                        |param:p
+                        {: 
+                           RESULT = new ParamList(p, null); 
+                        :}
+                        ;
 
-params_list           ::= params_list:pl COMMA param:p | param:p;
 
-param                 ::= type_specifier:ts ID:i | type_specifier ID:i;
+param                 ::= type_specifier:ts ID:i
+                        {: 
+                           RESULT = new Param(tsright, tsleft, ts, i); 
+                        :}
+                        | type_specifier:ts ID:i LSQUARE RSQUARE
+                        {: 
+                           RESULT = new Param(tsright, tsleft, ts, i); 
+                        :}
+                        ;
 
-compound_stmt         ::= LSQUIG local_declarations:lds statement_list:sl RSQUIG;
+compound_stmt         ::= LSQUIG local_declarations:lds statement_list:sl RSQUIG
+                        {: 
+                           RESULT = new CompoundStmt(ldsright, ldsleft, lds, sl); 
+                        :}
+                        ;
 
-local_declarations    ::= local_declarations:lds var_declaration:vd | ;
+local_declarations    ::= local_declarations:lds var_declaration:vd
+                        {: 
+                           DecList t = lds;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new DecList(vd, null);
+                           RESULT = lds;
+                        :}
+                        |
+                        {: 
+                           RESULT = new DecList(null, null); 
+                        :}
+                        ;
 
-statement_list        ::= statement_list:sl statement:s;
+statement_list        ::= statement_list:sl statement:s
+                        {: 
+                           StatementList t = sl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new StatementList(s, null);
+                           RESULT = sl;
+                        :}
+                        |
+                        {: 
+                           RESULT = new StatementList(null, null); 
+                        :}
+                        ;
 
-statement             ::= expression_stmt:es | compound_stmt:cs | selection_stmt:ss | iteration_stmt:is | return_stmt:rs;
+statement             ::= expression_stmt:es
+                        {: 
+                           RESULT = es; 
+                        :}
+                        | compound_stmt:cs
+                        {: 
+                           RESULT = cs; 
+                        :}
+                        | selection_stmt:ss
+                        {: 
+                           RESULT = ss;
+                        :}
+                        | iteration_stmt:is 
+                        {: 
+                           RESULT = is; 
+                        :}
+                        | return_stmt:rs
+                        {: 
+                           RESULT = rs;
+                        :}
+                        ;
 
-expression_stmt       ::= expression:e SEMI | SEMI;
+expression_stmt       ::= expression:e SEMI
+                        {: 
+                           RESULT = e; 
+                        :}
+                        |SEMI:s
+                        {: 
+                           RESULT = new Expression(sleft, sright, null, null, null); 
+                        :}
+                        ;
 
-selection_stmt        ::= IF LCURVED expression:e RCURVED statement:s | IF LCURVED expression:e RCURVED statement:s ELSE statement:s2;
+selection_stmt        ::= IF LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new SelectionStmt(eleft, eright, e, s, null); 
+                        :}
+                        | IF LCURVED expression:e RCURVED statement:s ELSE statement:s2
+                        {: 
+                           RESULT = new SelectionStmt(eleft, eright, e, s, s2); 
+                        :}
+                        ;
 
-iteration_stmt        ::= WHILE LCURVED expression:e RCURVED statement:s;
+iteration_stmt        ::= WHILE LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new IterationStmt(eleft, eright, e, s); 
+                        :}
+                        ;
 
-return_stmt           ::= RETURN expression:e SEMI | RETURN SEMI;
+return_stmt           ::= RETURN expression:e SEMI
+                        {: 
+                           RESULT = new ReturnStmt(eleft, eright,e); 
+                        :}   
+                        | RETURN SEMI:s
+                        {: 
+                           RESULT = new ReturnStmt(sleft, sright, null); 
+                        :}   
+                        ;
 
-expression            ::= var:v EQUALS expression:e | simple_expression:se;
+expression            ::= var:v ASSIGN expression:e 
+                        {: 
+                           RESULT = new Expression(vleft, vright, v, e, null); 
+                        :}   
+                        | simple_expression:se
+                        {: 
+                           RESULT = new Expression(seleft, seright, null, null, se); 
+                        :}   
+                        ;
 
-var                   ::= ID | ID LSQUARE expression:e RSQUARE;
+var                   ::= ID:i
+                        {: 
+                           RESULT = new Var(ileft, iright, i, null); 
+                        :}
+                        | ID:i LSQUARE expression:e RSQUARE
+                        {: 
+                           RESULT = new Var(ileft, iright, i, e); 
+                        :}
+                        ;
 
-simple_expression     ::= additive_expression:ae relop:r additive_expression:ae2 | additive_expression:ae;
+simple_expression     ::= additive_expression:ae relop:r additive_expression:ae2 
+                        {: 
+                           RESULT = new SimpleExpression(aeleft, aeright, ae, r, ae2); 
+                        :}
+                        | additive_expression:ae
+                        {: 
+                           RESULT = new SimpleExpression(aeleft, aeright, ae, null, null); 
+                        :}
+                        ;
 
-relop                 ::= LT | GT | LTEQ | GTEQ | NOTEQ | EQUALS;
+relop                 ::= LT:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"<");
+                        :}
+                        | GT:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,">");
+                        :}
+                        | LTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"<=");
+                        :}
+                        | GTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,">=");
+                        :}
+                        | NOTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"!=");
+                        :}
+                        | EQUALS:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"==");
+                        :}
+                        ;
 
-additive_expression   ::= additive_expression:ae addop:a term:t | term:t;
+additive_expression   ::= additive_expression:ae addop:a term:t 
+                        {:
+                           RESULT = new AdditiveExpression(aeleft,aeright,ae,a,t);
+                        :}
+                        | term:t
+                        {:
+                           RESULT = new AdditiveExpression(tleft,tright,null,null,t);
+                        :}
+                        ;
 
-addop                 ::= PLUS | MINUS;
+addop                 ::= PLUS:p
+                        {:
+                           RESULT = new AddOP(pleft,pright,"+");
+                        :}
+                        | MINUS:m
+                        {:
+                           RESULT = new AddOP(mleft,mright,"-");
+                        :}
+                        ;
 
-term                  ::= term:t mulop:m factor:f | factor:f;
+term                  ::= term:t mulop:m factor:f 
+                        {:
+                           RESULT = new Term(tleft,tright,t,m,f);
+                        :}
+                        | factor:f
+                        {:
+                           RESULT = new Term(fleft,fright,null,null,f);
+                        :}
+                        ;
 
-mulop                 ::= TIMES | OVER;
+mulop                 ::= TIMES:t
+                        {: 
+                           RESULT = new MulOP(tleft,tright,"*");
+                        :}
+                        | OVER:o
+                        {: 
+                           RESULT = new MulOP(oleft,oright,"/");
+                        :}
+                        ;
 
-call                  ::= ID LCURVED args:a RCURVED;
+factor                ::= LCURVED expression:e RCURVED
+                        {: 
+                           RESULT = new Factor(eleft,eright,e,null,null,null);
+                        :}
+                        | var:v 
+                        {: 
+                           RESULT = new Factor(vleft,vright,null,v,null,null);
+                        :}
+                        | call:c 
+                        {: 
+                           RESULT = new Factor(cleft,cright,null,null,c,null);
+                        :}
+                        | NUM:n
+                        {: 
+                           RESULT = new Factor(nleft,nright,null,null,null,new IntVal(nleft,nright,n));
+                        :}
+                        ;
 
-args                  ::= arg_list:al | ;
 
-arg_list              ::= arg_list:al COMMA expression:e | expression:e;
+call                  ::= ID:i LCURVED args:a RCURVED
+                        {: 
+                           RESULT = new Call(ileft,iright,i,a);
+                        :}
+                        ;
+               
+
+args                  ::= arg_list:al
+                        {: 
+                           RESULT = al;
+                        :}
+                        |
+                        {: 
+                           RESULT = new ArgList(null, null); 
+                        :}
+                        ;
+
+arg_list              ::= arg_list:al COMMA expression:e
+                        {: 
+                           ArgList t = al;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new ArgList(e, null);
+                           RESULT = al;
+                        :}
+                        |expression:e
+                        {: 
+                           RESULT = new ArgList(e, null); 
+                        :}
+                        ;
+
 
 

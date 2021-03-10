@@ -16,7 +16,7 @@ all: Main.class
 Main.class: absyn/*.java parser.java sym.java Lexer.java ShowTreeVisitor.java Scanner.java Main.java
 
 %.class: %.java
-	$(JAVAC) $(CLASSPATH) $^
+	$(JAVAC) -Xdiags:verbose $(CLASSPATH) $^
 
 Lexer.java: cminus.flex
 	$(JFLEX) cminus.flex
