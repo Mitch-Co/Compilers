@@ -75,7 +75,7 @@ terminal IF, ELSE, WHILE, INT, VOID, RETURN;
 terminal PLUS, MINUS, TIMES, OVER, LT, GT, LTEQ, GTEQ, NOTEQ;
 terminal EQUALS, ASSIGN, SEMI, COMMA, LCURVED, RCURVED, LSQUARE, RSQUARE, LSQUIG, RSQUIG;
 terminal String ID, NUM;
-terminal ERROR;
+
    
 non terminal DecList program, declaration_list, local_declarations;
 non terminal Dec declaration;
@@ -137,7 +137,7 @@ declaration           ::= var_declaration:vd
                         {: 
                            RESULT = vd; 
                         :}
-                      | fun_declaration:fd 
+                        | fun_declaration:fd 
                         {: 
                            RESULT = fd; 
                         :}
@@ -169,8 +169,8 @@ fun_declaration       ::= type_specifier:ts ID:i LCURVED params:p RCURVED compou
                         :}
                         | error:e ID:i LCURVED params:p RCURVED compound_stmt:cs
                         {:
-                           report_error("SYNTAX ERROR CAUSING FUNCTION DECLARATION FAILURE", e);
-                           RESULT = new FunDec(eleft, eright, new TypeVal(ileft, iright, "INT") , i, p, cs); 
+                           report_error("SYNTAX ERROR CAUSING FUN DECLARATION FAILURE", e);
+                           RESULT = new FunDec(eleft, eright,ts, i, p, cs); 
                         :}
                         ;
                         
@@ -195,6 +195,10 @@ params_list           ::= params_list:pl COMMA param:p
                         |param:p
                         {: 
                            RESULT = new ParamList(p, null); 
+                        :}
+                        | error:e
+                        {: 
+                           report_fatal_error("SYNTAX ERROR CAUSING PARAM LIST FAILURE", e);
                         :}
                         ;
 
@@ -241,6 +245,11 @@ statement_list        ::= statement_list:sl statement:s
                         {: 
                            RESULT = new StatementList(null, null); 
                         :}
+                        | statement_list:sl error:e
+                        {: 
+                           report_error("SYNTAX ERROR CAUSING STATEMENT LIST FAILURE", e);
+                           RESULT = sl;
+                        :}
                         ;
 
 statement             ::= expression_stmt:es
@@ -273,11 +282,6 @@ expression_stmt       ::= expression:e SEMI
                         {: 
                            RESULT = new Expression(sleft, sright, null, null, null); 
                         :}
-                        |error:e SEMI
-                        {: 
-                           report_error("SYNTAX ERROR CAUSING EXPRESSION STATEMENT FAILURE", e);
-                           RESULT = new Expression(eleft, eright, null, null, null);
-                        :}
                         ;
 
 selection_stmt        ::= IF LCURVED expression:e RCURVED statement:s
@@ -294,6 +298,8 @@ iteration_stmt        ::= WHILE LCURVED expression:e RCURVED statement:s
                         {: 
                            RESULT = new IterationStmt(eleft, eright, e, s); 
                         :}
+                        | WHILE LCURVED error:e RCURVED statement:s
+                        | WHILE LCURVED error:e RCURVED error:e
                         ;
 
 return_stmt           ::= RETURN expression:e SEMI
@@ -313,7 +319,22 @@ expression            ::= var:v ASSIGN expression:e
                         | simple_expression:se
                         {: 
                            RESULT = new Expression(seleft, seright, null, null, se); 
-                        :}   
+                        :}
+                        | var:v ASSIGN error:e
+                        {:
+                           report_error("SYNTAX ERROR CAUSING EXPRESSION FAILURE", e);
+                           RESULT = new Expression(vleft, vright, v, null, null); 
+                        :}
+                        | error:e ASSIGN expression:ex
+                        {:
+                           report_error("SYNTAX ERROR CAUSING EXPRESSION FAILURE", e);
+                           RESULT = new Expression(eleft, eright, null, ex, null); 
+                        :}
+                        | error:e ASSIGN error:e2
+                        {:
+                           report_error("SYNTAX ERROR CAUSING EXPRESSION FAILURE", e);
+                           RESULT = new Expression(eleft, eright, null, null, null); 
+                        :}
                         ;
 
 var                   ::= ID:i
@@ -323,6 +344,10 @@ var                   ::= ID:i
                         | ID:i LSQUARE expression:e RSQUARE
                         {: 
                            RESULT = new Var(ileft, iright, i, e); 
+                        :}
+                        | ID:i LSQUARE error:e RSQUARE
+                        {: 
+                           report_fatal_error("SYNTAX ERROR IN VAR EXPRESSION", e);
                         :}
                         ;
 
@@ -423,12 +448,7 @@ factor                ::= LCURVED expression:e RCURVED
 
 call                  ::= ID:i LCURVED args:a RCURVED
                         {: 
-                           RESULT = new Call(ileft,iright,i, a);
-                        :}
-                        | ID:i LCURVED error:e RCURVED
-                        {:
-                           report_error("SYNTAX ERROR CAUSING CALL FAILURE", e);
-                           RESULT = new Call(ileft,iright,i, new ArgList(null, null));
+                           RESULT = new Call(ileft,iright,i,a);
                         :}
                         ;
                
@@ -456,4 +476,6 @@ arg_list              ::= arg_list:al COMMA expression:e
                            RESULT = new ArgList(e, null); 
                         :}
                         ;
+
+
 

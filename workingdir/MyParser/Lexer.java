@@ -747,7 +747,7 @@ class Lexer implements java_cup.runtime.Scanner {
       else {
         switch (zzAction < 0 ? zzAction : ZZ_ACTION[zzAction]) {
           case 1:
-            { return symbol(sym.ERROR);
+            { System.err.println("ERROR: UNKNOWN TOKEN AT LINE " + yyline + " COLUMN " + yycolumn);
             }
             // fall through
           case 33: break;
