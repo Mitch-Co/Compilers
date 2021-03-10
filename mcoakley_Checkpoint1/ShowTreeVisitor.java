@@ -54,7 +54,9 @@ public class ShowTreeVisitor implements AbsynVisitor {
 
   public void visit( VarDec dec, int level ) {
     indent( level );
-    System.out.println( "VarDec: " + dec.ID);
+    System.out.println( "VarDec: ");
+    indent( level + 1);
+    System.out.println( "ID: " + dec.ID);
     dec.TypeSpecifier.accept(this, level + 1);
     if(dec.NUM != null)
     {
@@ -149,12 +151,16 @@ public class ShowTreeVisitor implements AbsynVisitor {
     indent( level ); 
     if(v.e != null)
     {
-      System.out.println( "Var: " + v.ID);
+      System.out.println( "Var: ");
+      indent( level + 1);
+      System.out.println( "ID: " + v.ID);
       v.e.accept( this, level + 1);
     }
     else
     {
-      System.out.println( "Var: " + v.ID);
+      System.out.println( "Var: ");
+      indent( level + 1);
+      System.out.println( "ID: " + v.ID);
     }
   }
 
@@ -197,7 +203,9 @@ public class ShowTreeVisitor implements AbsynVisitor {
 
   public void visit( Call c, int level){
     indent( level );
-    System.out.println( "Call: " + c.ID);
+    System.out.println( "Call: ");
+    indent( level + 1);
+    System.out.println( "ID: " + c.ID);
     c.al.accept( this, level + 1);
   }
 
@@ -208,6 +216,7 @@ public class ShowTreeVisitor implements AbsynVisitor {
   }
   public void visit( CompoundStmt cs, int level)
   {
+    indent( level );
     System.out.println( "CompoundStatement: ");
     cs.LocalDec.accept( this, level + 1);
     cs.sl.accept( this, level + 1);

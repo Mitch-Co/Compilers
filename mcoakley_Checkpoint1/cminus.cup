@@ -75,7 +75,6 @@ terminal IF, ELSE, WHILE, INT, VOID, RETURN;
 terminal PLUS, MINUS, TIMES, OVER, LT, GT, LTEQ, GTEQ, NOTEQ;
 terminal EQUALS, ASSIGN, SEMI, COMMA, LCURVED, RCURVED, LSQUARE, RSQUARE, LSQUIG, RSQUIG;
 terminal String ID, NUM;
-terminal ERROR;
    
 non terminal DecList program, declaration_list, local_declarations;
 non terminal Dec declaration;
@@ -103,6 +102,8 @@ non terminal Term term;
 non terminal Factor factor;
 non terminal Call call;
 non terminal ArgList args, arg_list; 
+
+precedence left IF, ELSE;
 
 
 /* ----------------------------Grammar Section-------------------- */
