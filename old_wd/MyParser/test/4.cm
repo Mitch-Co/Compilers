@@ -1,0 +1,15 @@
+/* A program with a random period at the beginning of the file */
+/* This should cause a conflict with the scanner and not  */
+
+.
+void main(void) {
+  int x; int fac;
+  fac = 1;
+
+  while (3 > 2) {
+    fac = fac * x;
+    x = x - 1;
+  } 
+
+  output(fac);
+}

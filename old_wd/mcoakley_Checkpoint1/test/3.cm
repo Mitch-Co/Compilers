@@ -1,0 +1,19 @@
+/* A program that has multiple invalid assignments */
+
+void main(void) {
+  int x; int fac;
+  fac = 1;
+  x = [[[[[[[]]]]]]];
+
+  x =  really <= not += valid;
+
+  fac = (((((x)))));
+
+  while (3 > 2) {
+    fac = fac * x;
+    cocks = 2;
+    x = x - 1;
+  } 
+
+  output(fac);
+}
