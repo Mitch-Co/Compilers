@@ -1,9 +1,9 @@
 package absyn;
 
 public class FunctionDec extends Dec {
-    NameTy result;
-    String func;
-    VarDecList params;
+    public NameTy result;
+    public String func;
+    public VarDecList params;
 
     public FunctionDec(int pos, NameTy result, String func, VarDecList params)
     {

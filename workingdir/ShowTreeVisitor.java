@@ -2,7 +2,7 @@ import absyn.*;
 
 public class ShowTreeVisitor implements AbsynVisitor {
 
-  final static int SPACES = 1;
+  final static int SPACES = 3;
 
   private void indent( int level ) {
     for( int i = 0; i < level * SPACES; i++ ) System.out.print( " " );
@@ -28,11 +28,12 @@ public class ShowTreeVisitor implements AbsynVisitor {
   }
   public void visit(VarExp exp, int level)
   {
-
+  
   }
   public void visit(IntExp exp, int level)
   {
-
+    indent(level);
+    System.out.println("IntExp: " + exp.value);
   }
   public void visit(CallExp exp, int level)
   {
@@ -40,7 +41,29 @@ public class ShowTreeVisitor implements AbsynVisitor {
   }
   public void visit(OpExp exp, int level)
   {
-
+    indent(level);
+    System.out.print("OpExp:");
+    if(exp.op == OpExp.PLUS)
+    {
+      System.out.print(" + ");
+    }
+    else if(exp.op == OpExp.MINUS)
+    {
+      System.out.print(" - ");
+    }
+    else if(exp.op == OpExp.MUL)
+    {
+      System.out.print(" * ");
+    }
+    else if(exp.op == OpExp.DIV)
+    {
+      System.out.print(" / ");
+    }
+    
+    System.out.print("\n");
+    exp.left.accept(this, level + 1);
+    exp.right.accept(this, level + 1);
+    
   }
   public void visit(AssignExp exp, int level)
   {
@@ -86,7 +109,13 @@ public class ShowTreeVisitor implements AbsynVisitor {
   }
   public void visit(ExpList list, int level)
   {
-    
+    while(list != null) {
+      if(list.head != null)
+      {
+        list.head.accept(this, level);
+      }
+      list = list.tail;
+    } 
   }
 
 

@@ -78,9 +78,14 @@ terminal String ID, NUM;
    
 non terminal DecList program, declaration_list;
 non terminal Dec declaration, fun_declaration;
+non terminal ExpList expression_list;
+non terminal Exp expression;
+non terminal Var var;
 
 
 
+
+precedence right ASSIGN;
 precedence nonassoc LT, GT, LTEQ, GTEQ, NOTEQ, EQUALS;
 precedence left PLUS, MINUS;
 precedence left TIMES, OVER;
@@ -89,11 +94,55 @@ precedence left TIMES, OVER;
 
 /* ----------------------------Grammar Section-------------------- */
    
-start with program;
+start with expression_list;
 
 
-program               ::= declaration_list:dl
+                     
+expression_list      ::= expression_list:el expression:e
                         {: 
-                           RESULT = dl; 
+                           ExpList tmp = el;
+                           while(tmp.tail != null)
+                              tmp = tmp.tail;
+                           tmp.tail = new ExpList(e, null);
+                           RESULT = el;
+                        :}
+                        | expression:e
+                        {: 
+                           RESULT = new ExpList(e, null); 
+                        :};
+
+expression           ::= var:v ASSIGN expression:e
+                        {:
+                           RESULT = new AssignExp(vleft, v, e);
+                        :}
+                        | expression:e PLUS expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, e, OpExp.PLUS, e2); 
+                        :}
+                        | expression:e MINUS expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, e, OpExp.MINUS, e2); 
+                        :}
+                        | expression:e TIMES expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, e, OpExp.MUL, e2); 
+                        :}
+                        | expression:e OVER expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, e, OpExp.DIV, e2);  
+                        :}
+                        | NUM:n // NOTE IMPLEMENT OTHER SENERIOS fat
+                        {: 
+                           RESULT = new IntExp(nleft, Integer.parseInt(n)); 
+                        :}
+                        ;
+                        
+var                   ::= ID:i
+                        {: 
+                           RESULT = new SimpleVar(ileft, i); 
+                        :}
+                        | ID:i RSQUARE expression:e LSQUARE
+                        {: 
+                           RESULT = new IndexVar(ileft, i, e);
                         :}
                         ;

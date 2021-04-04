@@ -1,23 +1,21 @@
 package absyn;
 
 public class OpExp extends Exp {
-    Exp left;
-    int op;
-    Exp right;
+    public Exp left;
+    public int op;
+    public Exp right;
 
-    enum type {
-        PLUS,
-        MINUS,
-        MUL,
-        DIV,
-        EQ,
-        NE,
-        LT,
-        LE,
-        GT,
-        GE,
-        ASSIGN
-    }
+    public static int PLUS = 1;
+    public static int MINUS = 2;
+    public static int MUL = 3;
+    public static int DIV = 4;
+    public static int EQ = 5;
+    public static int NE = 6;
+    public static int LT = 7;
+    public static int LE = 8;
+    public static int GT = 9;
+    public static int GE = 10;
+    public static int ASSIGN = 11;
 
     public OpExp(int pos, Exp left, int op, Exp right)
     {

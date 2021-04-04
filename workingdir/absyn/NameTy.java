@@ -1,9 +1,9 @@
 package absyn;
 
 public class NameTy extends Absyn {
-    int typ;
+    public int typ;
 
-    enum type {
+    public enum type {
         INT,
         VOID
     }

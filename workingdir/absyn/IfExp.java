@@ -1,9 +1,9 @@
 package absyn;
 
 public class IfExp extends Exp {
-    Exp _test;
-    Exp _then;
-    Exp _else;
+    public Exp _test;
+    public Exp _then;
+    public Exp _else;
 
     public IfExp(int pos, Exp _test, Exp _then, Exp _else)
     {
