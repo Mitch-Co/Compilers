@@ -88,7 +88,6 @@ non terminal CompoundExp compound_stmt;
 non terminal CallExp call;
 
 precedence left ELSE,COMMA;
-precedence right ASSIGN;
 precedence nonassoc LT, GT, LTEQ, GTEQ, NOTEQ, EQUALS;
 precedence left PLUS, MINUS;
 precedence left TIMES, OVER;
