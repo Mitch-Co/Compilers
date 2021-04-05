@@ -10,12 +10,20 @@ public class ShowTreeVisitor implements AbsynVisitor {
 
   public void visit(NameTy type, int level)
   {
-
+    indent(level);
+    if(type.typ == NameTy._INT)
+    {
+      System.out.println("NameTy: INT\n");
+    }
+    else if (type.typ == NameTy._VOID)
+    {
+      System.out.println("NameTy: VOID\n");
+    }
+    
   }
 
   public void visit(SimpleVar var, int level)
   {
-
   }
   public void visit(IndexVar var, int level)
   {
@@ -92,20 +100,34 @@ public class ShowTreeVisitor implements AbsynVisitor {
   }
   public void visit(SimpleDec dec, int level)
   {
-
+    indent(level);
+    System.out.print("SimpleDec: " + dec.name + "\n");
   }
   public void visit(ArrayDec dec, int level)
   {
-
+    indent(level);
+    System.out.print("ArrayDec: " + dec.name + "[" + String.valueOf(dec.size.value) + "]" + "\n");
   }
 
   public void visit(DecList list, int level)
   {
-
+    while(list != null) {
+      if(list.head != null)
+      {
+        list.head.accept(this, level);
+      }
+      list = list.tail;
+    } 
   }
   public void visit(VarDecList list, int level)
   {
-
+    while(list != null) {
+      if(list.head != null)
+      {
+        list.head.accept(this, level);
+      }
+      list = list.tail;
+    } 
   }
   public void visit(ExpList list, int level)
   {

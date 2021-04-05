@@ -5,9 +5,10 @@ public class IfExp extends Exp {
     public Exp _then;
     public Exp _else;
 
-    public IfExp(int pos, Exp _test, Exp _then, Exp _else)
+    public IfExp(int row, int col, Exp _test, Exp _then, Exp _else)
     {
-        this.pos = pos;
+        this.row = row;
+        this.col = col;
         this._test = _test;
         this._then = _then;
         this._else = _else;

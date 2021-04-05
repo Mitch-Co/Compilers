@@ -5,9 +5,10 @@ public class FunctionDec extends Dec {
     public String func;
     public VarDecList params;
 
-    public FunctionDec(int pos, NameTy result, String func, VarDecList params)
+    public FunctionDec(int row, int col, NameTy result, String func, VarDecList params)
     {
-        this.pos = pos;
+        this.row = row;
+        this.col = col;
         this.result = result;
         this.func = func;
         this.params = params;

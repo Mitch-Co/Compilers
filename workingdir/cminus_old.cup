@@ -138,7 +138,7 @@ declaration           ::= var_declaration:vd
                         {: 
                            RESULT = vd; 
                         :}
-                      | fun_declaration:fd 
+                        | fun_declaration:fd 
                         {: 
                            RESULT = fd; 
                         :}

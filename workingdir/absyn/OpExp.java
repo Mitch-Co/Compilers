@@ -17,9 +17,10 @@ public class OpExp extends Exp {
     public static int GE = 10;
     public static int ASSIGN = 11;
 
-    public OpExp(int pos, Exp left, int op, Exp right)
+    public OpExp(int row, int col, Exp left, int op, Exp right)
     {
-        this.pos = pos;
+        this.row = row;
+        this.col = col;
         this.left = left;
         this.right = right;
         this.op = op;
