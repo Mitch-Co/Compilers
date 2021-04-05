@@ -181,32 +181,32 @@ params                ::= params_list:pl
                         :}
                         | VOID:v
                         {: 
-                           RESULT = new ParamList(null, null); 
+                           RESULT = new VarDecList(null, null); 
                         :}
                         ;
 
 params_list           ::= params_list:pl COMMA param:p
                         {: 
-                           ParamList t = pl;
+                           VarDecList t = pl;
                            while(t.tail != null)
                               t = t.tail;
-                           t.tail = new ParamList(p, null);
+                           t.tail = new VarDecList(p, null);
                            RESULT = pl;
                         :}
-                        |param:p
+                        | param:p
                         {: 
-                           RESULT = new ParamList(p, null); 
+                           RESULT = new VarDecList(p, null); 
                         :}
                         ;
 
 
 param                 ::= type_specifier:ts ID:i
                         {: 
-                           RESULT = new Param(tsright, tsleft, ts, i); 
+                           RESULT = new SimpleDec(tsright, tsleft, ts, i); 
                         :}
                         | type_specifier:ts ID:i LSQUARE RSQUARE
                         {: 
-                           RESULT = new Param(tsright, tsleft, ts, i); 
+                           RESULT = new ArrayDec(tsright, tsleft, ts, i, null); 
                         :}
                         ;
 

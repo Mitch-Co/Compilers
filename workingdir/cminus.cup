@@ -78,12 +78,16 @@ terminal String ID, NUM;
    
 non terminal DecList program, declaration_list;
 non terminal Dec declaration, fun_declaration;
-non terminal VarDec var_declaration;
-non terminal ExpList arg_list;
-non terminal Exp expression, factor;
+non terminal VarDec var_declaration, param;
+non terminal VarDecList local_decs_or, local_declarations, params_list, params;
+non terminal ExpList arg_list, args, local_statements_or, statement_list;
+non terminal Exp expression, factor, statement, expression_stmt, selection_stmt, iteration_stmt, return_stmt;
 non terminal Var var;
 non terminal NameTy type_specifier;
+non terminal CompoundExp compound_stmt;
+non terminal CallExp call;
 
+precedence left ELSE,COMMA;
 precedence right ASSIGN;
 precedence nonassoc LT, GT, LTEQ, GTEQ, NOTEQ, EQUALS;
 precedence left PLUS, MINUS;
@@ -123,6 +127,10 @@ declaration           ::= var_declaration:vd
                         {: 
                            RESULT = vd; 
                         :}
+                        | fun_declaration:fd 
+                        {: 
+                           RESULT = fd; 
+                        :}
                         ;
 
 var_declaration       ::= type_specifier:ts ID:i SEMI
@@ -145,7 +153,165 @@ type_specifier        ::= INT:i
                         :}
                         ;
 
+fun_declaration       ::= type_specifier:ts ID:i LCURVED params:p RCURVED compound_stmt:cs
+                        {: 
+                           RESULT = new FunctionDec(tsleft, tsright, ts, i, p, cs); 
+                        :}
+                        ;
 
+params                ::= params_list:pl
+                        {: 
+                           RESULT = pl;
+                        :}
+                        | VOID:v
+                        {: 
+                           RESULT = new VarDecList(null, null); 
+                        :}
+                        ;
+
+params_list           ::= params_list:pl COMMA param:p
+                        {: 
+                           VarDecList t = pl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new VarDecList(p, null);
+                           RESULT = pl;
+                        :}
+                        | param:p
+                        {: 
+                           RESULT = new VarDecList(p, null); 
+                        :}
+                        ;
+
+param                 ::= type_specifier:ts ID:i
+                        {: 
+                           SimpleDec toReturn = new SimpleDec(tsright, tsleft, ts, i);
+                           toReturn.isParam = true;
+                           RESULT = toReturn;
+                        :}
+                        | type_specifier:ts ID:i LSQUARE RSQUARE
+                        {: 
+                           ArrayDec toReturn = new ArrayDec(tsright, tsleft, ts, i, null); 
+                           toReturn.isParam = true;
+                           RESULT = toReturn;
+                        :}
+                        ;
+
+compound_stmt         ::= LSQUIG local_decs_or:lds local_statements_or:sl RSQUIG
+                        {: 
+                           RESULT = new CompoundExp(ldsright, ldsleft, lds, sl); 
+                        :}
+                        ;
+
+local_decs_or         ::= local_declarations:lds
+                        {: 
+                           RESULT = lds;
+                        :}
+                        |
+                        {: 
+                           RESULT = new VarDecList(null, null); 
+                        :}
+                        ;
+
+local_declarations    ::= local_declarations:lds var_declaration:vd
+                        {: 
+                           VarDecList t = lds;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new VarDecList(vd, null);
+                           RESULT = lds;
+                        :}
+                        | var_declaration:vd
+                        {: 
+                           RESULT = new VarDecList(vd, null); 
+                        :}
+                        ;
+
+local_statements_or     ::= statement_list:sl
+                        {: 
+                           RESULT = sl;
+                        :}
+                        |
+                        {: 
+                           RESULT = new ExpList(null, null); 
+                        :}
+                        ;
+
+statement_list        ::= statement_list:sl statement:s
+                        {: 
+                           ExpList t = sl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new ExpList(s, null);
+                           RESULT = sl;
+                        :}
+                        | statement:s
+                        {: 
+                           RESULT = new ExpList(s, null); 
+                        :}
+                        ;
+
+statement             ::= expression_stmt:es
+                        {: 
+                           RESULT = es; 
+                        :}
+                        | compound_stmt:cs
+                        {: 
+                           RESULT = cs; 
+                        :}
+                        | selection_stmt:ss
+                        {: 
+                           RESULT = ss;
+                        :}
+                        | iteration_stmt:is 
+                        {: 
+                           RESULT = is; 
+                        :}
+                        | return_stmt:rs
+                        {: 
+                           RESULT = rs;
+                        :}
+                        ;
+expression_stmt       ::= expression:e SEMI
+                        {: 
+                           RESULT = e; 
+                        :}
+                        |SEMI:s
+                        {: 
+                           RESULT = new NilExp(sleft, sright); 
+                        :}
+                        |error:e SEMI
+                        {: 
+                           report_error("SYNTAX ERROR CAUSING EXPRESSION STATEMENT FAILURE", e);
+                           RESULT = new NilExp(eleft, eright);
+                        :}
+                        ;
+
+selection_stmt        ::= IF LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new IfExp(eleft, eright, e, s, null); 
+                        :}
+                        | IF LCURVED expression:e RCURVED statement:s ELSE statement:s2
+                        {: 
+                           RESULT = new IfExp(eleft, eright, e, s, s2);
+                        :}
+                        ;
+
+iteration_stmt        ::= WHILE LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new WhileExp(eleft, eright, e, s); 
+                        :}
+                        ;
+
+return_stmt           ::= RETURN expression:e SEMI
+                        {: 
+                           RESULT = new ReturnExp(eleft, eright, e); 
+                        :}   
+                        | RETURN SEMI:s
+                        {: 
+                           RESULT = new ReturnExp(sleft, sright, null); 
+                        :}   
+                        ;
 
 expression           ::= var:v ASSIGN expression:e
                         {:
@@ -167,9 +333,33 @@ expression           ::= var:v ASSIGN expression:e
                         {: 
                            RESULT = new OpExp(eleft, eright, e, OpExp.DIV, e2);  
                         :}
-                        | factor:f
+                        | expression:e LT expression:e2
                         {: 
-                           RESULT = f; 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.LT, e2);  
+                        :}
+                        | expression:e GT expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.GT, e2);  
+                        :}
+                        | expression:e LTEQ expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.LE, e2);  
+                        :}
+                        | expression:e GTEQ expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.GE, e2);  
+                        :}
+                        | expression:e NOTEQ expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.NE, e2);  
+                        :}
+                        | expression:e EQUALS expression:e2
+                        {: 
+                           RESULT = new OpExp(eleft, eright, e, OpExp.EQ, e2);  
+                        :}
+                        | factor:f
+                        {:
+                           RESULT = f;
                         :}
                         ;
                         
@@ -177,12 +367,12 @@ var                     ::= ID:i
                         {: 
                            RESULT = new SimpleVar(ileft, iright, i); 
                         :}
-                        | ID:i RSQUARE expression:e LSQUARE
+                        | ID:i LSQUARE expression:e RSQUARE
                         {: 
                            RESULT = new IndexVar(ileft, iright, i, e);
                         :}
                         ;
-                        
+
 factor                  ::= LCURVED expression:e RCURVED
                         {: 
                            RESULT = e;
@@ -191,17 +381,33 @@ factor                  ::= LCURVED expression:e RCURVED
                         {: 
                            RESULT = new VarExp(vleft, vright, v);
                         :}
-                        | ID:i LCURVED arg_list:a RCURVED
+                        | call:c
+                        {: 
+                           RESULT = c;
+                        :}
+                        | NUM:n
+                        {: 
+                           RESULT = new IntExp(nleft, nright, Integer.parseInt(n)); 
+                        :}
+                        ;
+
+call                  ::= ID:i LCURVED args:a RCURVED
                         {: 
                            RESULT = new CallExp(ileft, iright, i, a);
                         :}
-                        | ID:i LCURVED RCURVED
+                        ;
+
+args                  ::= arg_list:el
                         {: 
-                           RESULT = new CallExp(ileft, iright, i, null);
-                        :};
+                           RESULT = el; 
+                        :}
+                        |
+                        {: 
+                           RESULT = new ExpList(null, null); 
+                        :}
+                        ;
 
-
-arg_list                ::= arg_list:el expression:e
+arg_list                ::= arg_list:el COMMA expression:e
                         {: 
                            ExpList tmp = el;
                            while(tmp.tail != null)
@@ -212,4 +418,5 @@ arg_list                ::= arg_list:el expression:e
                         | expression:e
                         {: 
                            RESULT = new ExpList(e, null); 
-                        :};
+                        :}
+                        ;

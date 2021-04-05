@@ -7,6 +7,8 @@ public class ArrayDec extends VarDec {
 
     public ArrayDec(int row, int col, NameTy typ, String name, IntExp size)
     {
+        this.isParam = false;
+
         this.row = row;
         this.col = col;
         this.name = name;

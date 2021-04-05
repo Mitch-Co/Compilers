@@ -1,2 +1,9 @@
-int x;
-int x[23];
+int y[23];
+
+int main(void){
+
+    if(x > 3)
+    {
+        x = x+2;
+    }
+}

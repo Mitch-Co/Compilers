@@ -6,6 +6,8 @@ public class SimpleDec extends VarDec {
 
     public SimpleDec(int row, int col, NameTy typ, String name)
     {
+        this.isParam = false;
+        
         this.row = row;
         this.col = col;
         this.name = name;
