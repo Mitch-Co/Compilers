@@ -1,0 +1,460 @@
+/*
+  Created by: Fei Song
+  File Name: tiny.cup
+  To Build: java java_cup.Main < tiny.cup
+*/
+   
+   
+/* ----------------------Preliminary Declarations Section--------------------*/
+   
+/* Import the class java_cup.runtime.*  */
+//import java_cup.runtime.*;
+import absyn.*;
+   
+/* Parser code to change the way the parser reports errors (include
+   line and column number of the error). */
+parser code {:
+    
+    /* Change the method report_error so it will display the line and
+       column of where the error occurred in the input as well as the
+       reason for the error which is passed into the method in the
+       String 'message'. */
+    public void report_error(String message, Object info) {
+   
+        /* Create a StringBuffer called 'm' with the string 'Error' in it. */
+        StringBuffer m = new StringBuffer("Error");
+   
+        /* Check if the information passed to the method is the same
+           type as the type java_cup.runtime.Symbol. */
+        if (info instanceof java_cup.runtime.Symbol) {
+            /* Declare a java_cup.runtime.Symbol object 's' with the
+               information in the object info that is being typecasted
+               as a java_cup.runtime.Symbol object. */
+            java_cup.runtime.Symbol s = ((java_cup.runtime.Symbol) info);
+   
+            /* Check if the line number in the input is greater or
+               equal to zero. */
+            if (s.left >= 0) {                
+                /* Add to the end of the StringBuffer error message
+                   the line number of the error in the input. */
+                m.append(" in line "+(s.left+1));   
+                /* Check if the column number in the input is greater
+                   or equal to zero. */
+                if (s.right >= 0)                    
+                    /* Add to the end of the StringBuffer error message
+                       the column number of the error in the input. */
+                    m.append(", column "+(s.right+1));
+            }
+        }
+   
+        /* Add to the end of the StringBuffer error message created in
+           this method the message that was passed into this method. */
+        m.append(" : "+message);
+   
+        /* Print the contents of the StringBuffer 'm', which contains
+           an error message, out on a line. */
+        System.err.println(m);
+    }
+   
+    /* Change the method report_fatal_error so when it reports a fatal
+       error it will display the line and column number of where the
+       fatal error occurred in the input as well as the reason for the
+       fatal error which is passed into the method in the object
+       'message' and then exit.*/
+    public void report_fatal_error(String message, Object info) {
+        report_error(message, info);
+        System.exit(1);
+    }
+
+:};
+   
+   
+/* ------------Declaration of Terminals and Non Terminals Section----------- */
+   
+terminal IF, ELSE, WHILE, INT, VOID, RETURN;
+terminal PLUS, MINUS, TIMES, OVER, LT, GT, LTEQ, GTEQ, NOTEQ;
+terminal EQUALS, ASSIGN, SEMI, COMMA, LCURVED, RCURVED, LSQUARE, RSQUARE, LSQUIG, RSQUIG;
+terminal String ID, NUM;
+   
+non terminal DecList program, declaration_list, local_declarations;
+non terminal Dec declaration;
+non terminal VarDec var_declaration;
+non terminal FunDec fun_declaration;
+non terminal TypeVal type_specifier;
+
+
+non terminal Statement statement;
+non terminal StatementList statement_list;
+non terminal CompoundStmt compound_stmt;
+non terminal Expression expression_stmt, expression;
+non terminal ParamList params_list,params;
+non terminal Param param;
+non terminal Var var;
+non terminal SimpleExpression simple_expression;
+non terminal AdditiveExpression additive_expression;
+non terminal SelectionStmt selection_stmt;
+non terminal IterationStmt iteration_stmt;
+non terminal ReturnStmt return_stmt; 
+non terminal RelOP relop;
+non terminal AddOP addop;
+non terminal MulOP mulop;
+non terminal Term term;
+non terminal Factor factor;
+non terminal Call call;
+non terminal ArgList args, arg_list; 
+
+precedence left IF, ELSE;
+
+
+/* ----------------------------Grammar Section-------------------- */
+   
+start with program;
+
+program               ::= declaration_list:dl
+                        {: 
+                           RESULT = dl; 
+                        :}
+                        ;
+
+declaration_list      ::= declaration_list:dl declaration:d
+                        {: 
+                           DecList t = dl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new DecList(d, null);
+                           RESULT = dl;
+                        :}
+                        | declaration:d
+                        {: 
+                           RESULT = new DecList(d, null); 
+                        :}
+                        | error:e
+                        {: 
+                           report_fatal_error("SYNTAX ERROR CAUSING DEC LIST FAILURE", e); 
+                        :}
+                        ;
+
+declaration           ::= var_declaration:vd 
+                        {: 
+                           RESULT = vd; 
+                        :}
+                        | fun_declaration:fd 
+                        {: 
+                           RESULT = fd; 
+                        :}
+                        ;
+
+var_declaration       ::= type_specifier:ts ID:i SEMI
+                        {: 
+                           RESULT = new VarDec(tsleft, tsright,i, ts, null); 
+                        :}
+                        | type_specifier:ts ID:i LSQUARE NUM:n RSQUARE SEMI
+                        {: 
+                           RESULT = new VarDec(tsleft, tsright,i , ts, new IntVal(nleft,nright,n)); 
+                        :}
+                        ;
+
+type_specifier        ::= INT:i 
+                        {: 
+                           RESULT = new TypeVal(ileft, iright, "INT"); 
+                        :}
+                        | VOID:v
+                        {: 
+                           RESULT = new TypeVal(vleft, vright, "VOID"); 
+                        :}
+                        ;
+
+fun_declaration       ::= type_specifier:ts ID:i LCURVED params:p RCURVED compound_stmt:cs
+                        {: 
+                           RESULT = new FunDec(tsleft, tsright,ts, i, p, cs); 
+                        :}
+                        | error:e ID:i LCURVED params:p RCURVED compound_stmt:cs
+                        {:
+                           report_error("SYNTAX ERROR CAUSING FUNCTION DECLARATION FAILURE", e);
+                           RESULT = new FunDec(eleft, eright, new TypeVal(ileft, iright, "INT") , i, p, cs); 
+                        :}
+                        ;
+                        
+params                ::= params_list:pl
+                        {: 
+                           RESULT = pl;
+                        :}
+                        | VOID:v
+                        {: 
+                           RESULT = new VarDecList(null, null); 
+                        :}
+                        ;
+
+params_list           ::= params_list:pl COMMA param:p
+                        {: 
+                           VarDecList t = pl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new VarDecList(p, null);
+                           RESULT = pl;
+                        :}
+                        | param:p
+                        {: 
+                           RESULT = new VarDecList(p, null); 
+                        :}
+                        ;
+
+
+param                 ::= type_specifier:ts ID:i
+                        {: 
+                           RESULT = new SimpleDec(tsright, tsleft, ts, i); 
+                        :}
+                        | type_specifier:ts ID:i LSQUARE RSQUARE
+                        {: 
+                           RESULT = new ArrayDec(tsright, tsleft, ts, i, null); 
+                        :}
+                        ;
+
+compound_stmt         ::= LSQUIG local_declarations:lds statement_list:sl RSQUIG
+                        {: 
+                           RESULT = new CompoundStmt(ldsright, ldsleft, lds, sl); 
+                        :}
+                        ;
+
+local_declarations    ::= local_declarations:lds var_declaration:vd
+                        {: 
+                           DecList t = lds;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new DecList(vd, null);
+                           RESULT = lds;
+                        :}
+                        |
+                        {: 
+                           RESULT = new DecList(null, null); 
+                        :}
+                        ;
+
+statement_list        ::= statement_list:sl statement:s
+                        {: 
+                           StatementList t = sl;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new StatementList(s, null);
+                           RESULT = sl;
+                        :}
+                        |
+                        {: 
+                           RESULT = new StatementList(null, null); 
+                        :}
+                        ;
+
+statement             ::= expression_stmt:es
+                        {: 
+                           RESULT = es; 
+                        :}
+                        | compound_stmt:cs
+                        {: 
+                           RESULT = cs; 
+                        :}
+                        | selection_stmt:ss
+                        {: 
+                           RESULT = ss;
+                        :}
+                        | iteration_stmt:is 
+                        {: 
+                           RESULT = is; 
+                        :}
+                        | return_stmt:rs
+                        {: 
+                           RESULT = rs;
+                        :}
+                        ;
+
+expression_stmt       ::= expression:e SEMI
+                        {: 
+                           RESULT = e; 
+                        :}
+                        |SEMI:s
+                        {: 
+                           RESULT = new Expression(sleft, sright, null, null, null); 
+                        :}
+                        |error:e SEMI
+                        {: 
+                           report_error("SYNTAX ERROR CAUSING EXPRESSION STATEMENT FAILURE", e);
+                           RESULT = new Expression(eleft, eright, null, null, null);
+                        :}
+                        ;
+
+selection_stmt        ::= IF LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new SelectionStmt(eleft, eright, e, s, null); 
+                        :}
+                        | IF LCURVED expression:e RCURVED statement:s ELSE statement:s2
+                        {: 
+                           RESULT = new SelectionStmt(eleft, eright, e, s, s2); 
+                        :}
+                        ;
+
+iteration_stmt        ::= WHILE LCURVED expression:e RCURVED statement:s
+                        {: 
+                           RESULT = new IterationStmt(eleft, eright, e, s); 
+                        :}
+                        ;
+
+return_stmt           ::= RETURN expression:e SEMI
+                        {: 
+                           RESULT = new ReturnStmt(eleft, eright,e); 
+                        :}   
+                        | RETURN SEMI:s
+                        {: 
+                           RESULT = new ReturnStmt(sleft, sright, null); 
+                        :}   
+                        ;
+
+expression            ::= var:v ASSIGN expression:e 
+                        {: 
+                           RESULT = new Expression(vleft, vright, v, e, null); 
+                        :}   
+                        | simple_expression:se
+                        {: 
+                           RESULT = new Expression(seleft, seright, null, null, se); 
+                        :}   
+                        ;
+
+var                   ::= ID:i
+                        {: 
+                           RESULT = new Var(ileft, iright, i, null); 
+                        :}
+                        | ID:i LSQUARE expression:e RSQUARE
+                        {: 
+                           RESULT = new Var(ileft, iright, i, e); 
+                        :}
+                        ;
+
+simple_expression     ::= additive_expression:ae relop:r additive_expression:ae2 
+                        {: 
+                           RESULT = new SimpleExpression(aeleft, aeright, ae, r, ae2); 
+                        :}
+                        | additive_expression:ae
+                        {: 
+                           RESULT = new SimpleExpression(aeleft, aeright, ae, null, null); 
+                        :}
+                        ;
+
+relop                 ::= LT:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"<");
+                        :}
+                        | GT:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,">");
+                        :}
+                        | LTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"<=");
+                        :}
+                        | GTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,">=");
+                        :}
+                        | NOTEQ:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"!=");
+                        :}
+                        | EQUALS:op
+                        {:
+                           RESULT = new RelOP(opleft,opright,"==");
+                        :}
+                        ;
+
+additive_expression   ::= additive_expression:ae addop:a term:t 
+                        {:
+                           RESULT = new AdditiveExpression(aeleft,aeright,ae,a,t);
+                        :}
+                        | term:t
+                        {:
+                           RESULT = new AdditiveExpression(tleft,tright,null,null,t);
+                        :}
+                        ;
+
+addop                 ::= PLUS:p
+                        {:
+                           RESULT = new AddOP(pleft,pright,"+");
+                        :}
+                        | MINUS:m
+                        {:
+                           RESULT = new AddOP(mleft,mright,"-");
+                        :}
+                        ;
+
+term                  ::= term:t mulop:m factor:f 
+                        {:
+                           RESULT = new Term(tleft,tright,t,m,f);
+                        :}
+                        | factor:f
+                        {:
+                           RESULT = new Term(fleft,fright,null,null,f);
+                        :}
+                        ;
+
+mulop                 ::= TIMES:t
+                        {: 
+                           RESULT = new MulOP(tleft,tright,"*");
+                        :}
+                        | OVER:o
+                        {: 
+                           RESULT = new MulOP(oleft,oright,"/");
+                        :}
+                        ;
+
+factor                ::= LCURVED expression:e RCURVED
+                        {: 
+                           RESULT = new Factor(eleft,eright,e,null,null,null);
+                        :}
+                        | var:v 
+                        {: 
+                           RESULT = new Factor(vleft,vright,null,v,null,null);
+                        :}
+                        | call:c 
+                        {: 
+                           RESULT = new Factor(cleft,cright,null,null,c,null);
+                        :}
+                        | NUM:n
+                        {: 
+                           RESULT = new Factor(nleft,nright,null,null,null,new IntVal(nleft,nright,n));
+                        :}
+                        ;
+
+
+call                  ::= ID:i LCURVED args:a RCURVED
+                        {: 
+                           RESULT = new Call(ileft,iright,i, a);
+                        :}
+                        | ID:i LCURVED error:e RCURVED
+                        {:
+                           report_error("SYNTAX ERROR CAUSING CALL FAILURE", e);
+                           RESULT = new Call(ileft,iright,i, new ArgList(null, null));
+                        :}
+                        ;
+               
+
+args                  ::= arg_list:al
+                        {: 
+                           RESULT = al;
+                        :}
+                        |
+                        {: 
+                           RESULT = new ArgList(null, null); 
+                        :}
+                        ;
+
+arg_list              ::= arg_list:al COMMA expression:e
+                        {: 
+                           ArgList t = al;
+                           while(t.tail != null)
+                              t = t.tail;
+                           t.tail = new ArgList(e, null);
+                           RESULT = al;
+                        :}
+                        |expression:e
+                        {: 
+                           RESULT = new ArgList(e, null); 
+                        :}
+                        ;
+
