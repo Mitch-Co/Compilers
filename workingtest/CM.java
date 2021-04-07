@@ -25,6 +25,12 @@ class CM {
          System.out.println("The abstract syntax tree is:");
          ShowTreeVisitor visitor = new ShowTreeVisitor();
          result.accept(visitor, 0); 
+         MitchsMarvelousMachinecodeMaker MMMM = new MitchsMarvelousMachinecodeMaker();
+         String output = MMMM.generateAssembly(result);
+
+         System.out.println("\nASSEMBLY:");
+         System.out.println(output);
+
       }
     } catch (Exception e) {
       /* do cleanup here -- possibly rethrow e */

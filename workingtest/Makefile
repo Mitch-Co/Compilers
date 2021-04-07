@@ -13,7 +13,7 @@ CLASSPATH=-cp /usr/share/java/cup.jar:.
 
 all: CM.class
 
-CM.class: absyn/*.java parser.java sym.java Lexer.java ShowTreeVisitor.java Scanner.java CM.java
+CM.class: absyn/*.java parser.java sym.java Lexer.java ShowTreeVisitor.java MitchsMarvelousMachinecodeMaker.java Scanner.java CM.java
 
 %.class: %.java
 	$(JAVAC) -Xdiags:verbose $(CLASSPATH) $^

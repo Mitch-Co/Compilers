@@ -26,5 +26,4 @@ public interface AbsynVisitor {
   public void visit(VarDecList list, int level);
   public void visit(ExpList list, int level);
 
-
 }
