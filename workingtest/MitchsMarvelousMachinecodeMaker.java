@@ -246,6 +246,18 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         currentTemp++;
         recursiveSolve(toSolve, returnState + tempVarsOffset, resultReg, tempReg);
         addCommand("LD " + String.valueOf(resultReg) + ", " + String.valueOf(returnState + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+
     }
 
     public void prelude()
