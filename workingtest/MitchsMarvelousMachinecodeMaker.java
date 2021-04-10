@@ -4,15 +4,14 @@ import java.util.*;
 public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
 
     String toReturn = "";
-    List<String> commands = new ArrayList<String>();
-
+    
+    List<String> currentCommandList = null;
     static Integer MemStartReg = 0;
     static Integer ZeroValReg = 1;
     static Integer MaxMemVal = 1024;
     static Integer tempVarsOffset = 512;
 
     Integer currentMem = 0;
-    Integer currentInstruction = 0;
     HashMap<String, Integer> memoryMapVariables = new HashMap<String, Integer>();
 
     Integer currentTemp = 0;
@@ -53,11 +52,17 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         if(exp.rhs instanceof OpExp)
         {
             solveOpExp((OpExp) exp.rhs, 2, 3);
+            addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
         }
         if(exp.rhs instanceof IntExp)
         {
-            IntExp tmp = (IntExp) exp.rhs;
-            assignVar(getVarName(exp.lhs), tmp.value);
+            assignReg(2, ((IntExp) exp.rhs).value);
+            assignVar(getVarName(exp.lhs), 2);
+        }
+        if(exp.rhs instanceof VarExp)
+        {
+            addCommand("LD " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) exp.rhs).variable)) + "(" + String.valueOf(MemStartReg) + ")");
+            addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
         }
         
     }
@@ -66,13 +71,69 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     }
     public void visit(WhileExp exp, int level)
     {
+        List<String> prevScope = currentCommandList;
+        List<String> conditionScope = new ArrayList<String>();
+        List<String> expressionScope = new ArrayList<String>();
+
+        currentCommandList = conditionScope;
+        if(exp.test instanceof OpExp)
+        {
+            OpExp tmp = (OpExp) exp.test;
+            solveOpExp(tmp, 2, 3);
+            
+            if(tmp.op == OpExp.EQ)
+            {
+                addCommand("JEQ " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.NE)
+            {
+                addCommand("JNE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.LT)
+            {
+                addCommand("JLT " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.GT)
+            {
+                addCommand("JGT " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.LE)
+            {
+                addCommand("JLE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.GE)
+            {
+                addCommand("JGE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+
+        }
+        else
+        {
+            currentCommandList = prevScope;
+            return;
+        }
+
+        currentCommandList = expressionScope;
+        exp.body.accept(this, level);
+        currentCommandList = prevScope;
+
+        Integer n = conditionScope.size();
+        Integer m = expressionScope.size();
+        
+
+        currentCommandList.addAll(conditionScope);
+        addCommand("JEQ " + String.valueOf(ZeroValReg) + ", " +  String.valueOf(m + 1) + "(" + String.valueOf(7) + ")");
+        currentCommandList.addAll(expressionScope);
+        addCommand("JEQ " + String.valueOf(ZeroValReg) + ", " +  String.valueOf(-1* (m + n + 1 + 1)) + "(" + String.valueOf(7) + ")");
+           
     }
     public void visit(ReturnExp exp, int level)
     {
     }
     public void visit(CompoundExp exp, int level)
     {
-
+        handleVariableList(exp.decs, level);
+        handleExps(exp.exps, level);
     }
   
     public void visit(FunctionDec dec, int level)
@@ -87,7 +148,7 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     public void visit(SimpleDec dec, int level)
     {
         memoryMapVariables.put(dec.name, currentMem);
-        addCommand("ST 0, " + currentMem + "(0)");
+        addCommand("ST 0, " + currentMem + "(" + String.valueOf(ZeroValReg) +  ")");
         currentMem++;
     }
     public void visit(ArrayDec dec, int level)
@@ -139,9 +200,9 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     public void buildOutput()
     {
         int i = 0;
-        while(!commands.isEmpty())
+        while(!currentCommandList.isEmpty())
         {
-            this.toReturn = this.toReturn + "\n" + String.valueOf(i) + ": " + commands.remove(0);
+            this.toReturn = this.toReturn + String.valueOf(i) + ": " + currentCommandList.remove(0) + "\n";
             i++;
         }
         
@@ -160,8 +221,7 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
 
     public void addCommand(String toAdd)
     {
-        commands.add(toAdd);
-        this.currentInstruction += 1;
+        currentCommandList.add(toAdd);
     }
 
     public void zeroRegister(Integer regNum)
@@ -183,7 +243,8 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         }
     }
 
-    public void recursiveSolve(OpExp toSolve, Integer resultMem, Integer tempReg1, Integer tempReg2)
+    // Do you think god stays in heaven because he too lives in fear of what he's created?
+    public boolean recursiveSolve(OpExp toSolve, Integer resultMem, Integer tempReg1, Integer tempReg2)
     {
 
         Integer memLoc1 = currentTemp;
@@ -200,6 +261,11 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
             addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
             
         }
+        else if(toSolve.left instanceof VarExp)
+        {
+            addCommand("LD " + String.valueOf(tempReg1) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) toSolve.left).variable)) + "(" + String.valueOf(MemStartReg) + ")");
+            addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+        }
         else if(toSolve.left instanceof OpExp)
         {
             recursiveSolve((OpExp) toSolve.left, memLoc1 + tempVarsOffset, tempReg1, tempReg2);
@@ -209,6 +275,11 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         if(toSolve.right instanceof IntExp)
         {
             assignReg(tempReg2, ((IntExp) toSolve.right).value);
+            addCommand("ST " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+        }
+        else if(toSolve.right instanceof VarExp)
+        {
+            addCommand("LD " + String.valueOf(tempReg2) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) toSolve.right).variable)) + "(" + String.valueOf(MemStartReg) + ")");
             addCommand("ST " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
         }
         else if(toSolve.right instanceof OpExp)
@@ -235,8 +306,39 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         {
             addCommand("DIV " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
         }
+        else if(toSolve.op == OpExp.EQ)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
+        else if(toSolve.op == OpExp.NE)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
+        else if(toSolve.op == OpExp.LT)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
+        else if(toSolve.op == OpExp.GT)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
+        else if(toSolve.op == OpExp.LE)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
+        else if(toSolve.op == OpExp.GE)
+        {
+            addCommand("SUB " + String.valueOf(tempReg1) + ", " +  String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2));
+            return true;
+        }
 
         addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(resultMem) + "(" + String.valueOf(MemStartReg) + ")");
+        return false;
         // put result in result memory
     }
     public void solveOpExp(OpExp toSolve, Integer resultReg, Integer tempReg)
@@ -244,19 +346,12 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         Integer returnState = currentTemp;
         tempVariables.put(String.valueOf(currentTemp), currentTemp + tempVarsOffset);
         currentTemp++;
-        recursiveSolve(toSolve, returnState + tempVarsOffset, resultReg, tempReg);
-        addCommand("LD " + String.valueOf(resultReg) + ", " + String.valueOf(returnState + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
-        //TODO: REMOVE TEMP VARIABLES FROM ALLOCATION!
+        boolean isComparison = recursiveSolve(toSolve, returnState + tempVarsOffset, resultReg, tempReg);
+        if(!isComparison)
+        {
+            addCommand("LD " + String.valueOf(resultReg) + ", " + String.valueOf(returnState + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+        }
+        tempVariables.clear();
 
     }
 
@@ -287,6 +382,8 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
 
     public String generateAssembly(Absyn tree)
     {
+        List<String> commands = new ArrayList<String>();
+        currentCommandList = commands;
         prelude();
         tree.accept(this, 0);
         finale();

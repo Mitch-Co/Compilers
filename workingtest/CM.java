@@ -13,6 +13,7 @@
    
 import java.io.*;
 import absyn.*;
+import java.io.*;
    
 class CM {
   public final static boolean SHOW_TREE = true;
@@ -27,6 +28,19 @@ class CM {
          result.accept(visitor, 0); 
          MitchsMarvelousMachinecodeMaker MMMM = new MitchsMarvelousMachinecodeMaker();
          String output = MMMM.generateAssembly(result);
+         
+         try 
+         {
+          FileWriter fp = new FileWriter(argv[0].substring(0,argv[0].length() - 3) + ".tm");
+          fp.write(output);
+          fp.close();
+          
+         }
+         catch (Exception e)
+         {
+
+         }
+         
 
          System.out.println("\nASSEMBLY:");
          System.out.println(output);
