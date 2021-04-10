@@ -68,6 +68,74 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     }
     public void visit(IfExp exp, int level)
     {
+        List<String> prevScope = currentCommandList;
+        List<String> conditionScope = new ArrayList<String>();
+        List<String> expressionScope = new ArrayList<String>();
+        List<String> expressionScope2 = new ArrayList<String>();
+
+        currentCommandList = conditionScope;
+        if(exp._test instanceof OpExp)
+        {
+            OpExp tmp = (OpExp) exp._test;
+            solveOpExp(tmp, 2, 3);
+            
+            if(tmp.op == OpExp.EQ)
+            {
+                addCommand("JEQ " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.NE)
+            {
+                addCommand("JNE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.LT)
+            {
+                addCommand("JLT " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.GT)
+            {
+                addCommand("JGT " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.LE)
+            {
+                addCommand("JLE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+            if(tmp.op == OpExp.GE)
+            {
+                addCommand("JGE " + String.valueOf(2) + ", " +  String.valueOf(1) + "(" + String.valueOf(7) + ")");
+            }
+
+        }
+        currentCommandList = expressionScope;
+        exp._then.accept(this, level);
+
+        if(exp._else == null)
+        {
+            currentCommandList = prevScope;
+
+            Integer n = conditionScope.size();
+            Integer m = expressionScope.size();
+
+            currentCommandList.addAll(conditionScope);
+            addCommand("JEQ " + String.valueOf(ZeroValReg) + ", " +  String.valueOf(m) + "(" + String.valueOf(7) + ")");
+            currentCommandList.addAll(expressionScope);
+        }
+        else
+        {
+            currentCommandList = expressionScope2;
+            exp._else.accept(this, level);
+            currentCommandList = prevScope;
+
+            Integer n = conditionScope.size();
+            Integer m = expressionScope.size();
+            Integer q = expressionScope2.size();
+
+            currentCommandList.addAll(conditionScope);
+            addCommand("JEQ " + String.valueOf(ZeroValReg) + ", " +  String.valueOf(m + 1) + "(" + String.valueOf(7) + ")");
+            currentCommandList.addAll(expressionScope);
+            addCommand("JEQ " + String.valueOf(ZeroValReg) + ", " +  String.valueOf(q) + "(" + String.valueOf(7) + ")");
+            currentCommandList.addAll(expressionScope2);
+        }
+
     }
     public void visit(WhileExp exp, int level)
     {

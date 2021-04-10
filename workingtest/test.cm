@@ -3,21 +3,27 @@ void main(void)
     int x;
     int y;
     int z;
-    int w;
-    x = 2000;
+
+    x = 22;
     y = 0;
-    z = 3000;
-    w = 0;
+    z = 0;
 
-
-  while (x > 0) {
-      x = x - 1;
-      while(z > y)
+    if(6 > 9)
+    {
+      y = 69;
+      y = 69;
+      y = 69;
+      y = 69;
+    }
+    else
+    {
+      y = 999 * 2 / 2;
+      while (y/2 > z)
       {
-        z = z - 1;
-        w = w + 1;
+        z = z + 1/1;
       }
-      z = 3000;
-  } 
+    }
+
+    x = 0;
 
 }
