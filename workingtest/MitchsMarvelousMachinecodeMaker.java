@@ -43,27 +43,93 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     }
     public void visit(CallExp exp, int level)
     {
+        if(exp.func.equals("output"))
+        {
+            Exp callArg = ((ExpList) exp.args).head;
+            if(callArg == null)
+            {
+                return;
+            }
+
+            if(callArg instanceof OpExp)
+            {
+                solveOpExp((OpExp) callArg, 2, 3);
+            }
+            else
+            {
+                OpExp imLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, callArg);
+                solveOpExp(imLazy, 2, 3);
+            }
+            addCommand("OUT " + String.valueOf(2) + " ,0 ,0");
+
+        }
     }
     public void visit(OpExp exp, int level)
     {
     }
     public void visit(AssignExp exp, int level)
     {
-        if(exp.rhs instanceof OpExp)
+        Integer getIndex = memoryMapVariables.get(getVarName(exp.lhs));
+        if(exp.lhs instanceof SimpleVar)
         {
-            solveOpExp((OpExp) exp.rhs, 2, 3);
-            addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
+            if(exp.rhs instanceof OpExp)
+            {
+                solveOpExp((OpExp) exp.rhs, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
+            }
+            if(exp.rhs instanceof IntExp)
+            {
+                assignReg(2, ((IntExp) exp.rhs).value);
+                assignVar(getVarName(exp.lhs), 2);
+            }
+            if(exp.rhs instanceof VarExp)
+            {
+                OpExp imREALLYLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, exp.rhs);
+                solveOpExp(imREALLYLazy, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
+            }
+            if(exp.rhs instanceof CallExp)
+            {
+                OpExp imREALLYLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, exp.rhs);
+                solveOpExp(imREALLYLazy, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
+            }
         }
-        if(exp.rhs instanceof IntExp)
+        else if(exp.lhs instanceof IndexVar)
         {
-            assignReg(2, ((IntExp) exp.rhs).value);
-            assignVar(getVarName(exp.lhs), 2);
+            OpExp imLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, ((IndexVar) exp.lhs).index);
+            solveOpExp(imLazy, 4, 3);
+
+            if(exp.rhs instanceof OpExp)
+            {
+                solveOpExp((OpExp) exp.rhs, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(4) + ")");
+            }
+            if(exp.rhs instanceof IntExp)
+            {
+                assignReg(2, ((IntExp) exp.rhs).value);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs))+ "(" + String.valueOf(4) + ")");
+            }
+            if(exp.rhs instanceof VarExp)
+            {
+                OpExp imREALLYLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, exp.rhs);
+                solveOpExp(imREALLYLazy, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(4) + ")");
+            }
+            if(exp.rhs instanceof CallExp)
+            {
+                OpExp imREALLYLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, exp.rhs);
+                solveOpExp(imREALLYLazy, 2, 3);
+                addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(4) + ")");
+            }
+        
         }
-        if(exp.rhs instanceof VarExp)
+        else
         {
-            addCommand("LD " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) exp.rhs).variable)) + "(" + String.valueOf(MemStartReg) + ")");
-            addCommand("ST " + String.valueOf(2) + ", " + memoryMapVariables.get(getVarName(exp.lhs)) + "(" + String.valueOf(MemStartReg) + ")");
+            return;
         }
+
+
         
     }
     public void visit(IfExp exp, int level)
@@ -221,7 +287,9 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     }
     public void visit(ArrayDec dec, int level)
     {
-
+        memoryMapVariables.put(dec.name, currentMem);
+        addCommand("ST 0, " + currentMem + "(" + String.valueOf(ZeroValReg) +  ")");
+        currentMem = currentMem + ((IntExp)dec.size).value;
     }
   
     public void visit(DecList list, int level)
@@ -306,7 +374,6 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
     {
         if(regNum < 8 && regNum > 0 && regNum != ZeroValReg)
         {
-            zeroRegister(regNum);
             addCommand("LDC "+ String.valueOf(regNum) + ", " + String.valueOf(val) + "(" + String.valueOf(ZeroValReg) + ")");
         }
     }
@@ -331,12 +398,46 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         }
         else if(toSolve.left instanceof VarExp)
         {
-            addCommand("LD " + String.valueOf(tempReg1) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) toSolve.left).variable)) + "(" + String.valueOf(MemStartReg) + ")");
-            addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            Var targetVar = (Var) ((VarExp) toSolve.left).variable;
+            if(targetVar instanceof SimpleVar)
+            {
+                addCommand("LD " + String.valueOf(tempReg1) + ", " + memoryMapVariables.get(getVarName(targetVar)) + "(" + String.valueOf(MemStartReg) + ")");
+                addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
+            else if(targetVar instanceof IndexVar)
+            {
+                IndexVar solveIndex = (IndexVar) targetVar;
+                Integer memLoc3 = currentTemp;
+                currentTemp++;
+                if(solveIndex.index instanceof OpExp)
+                {
+                    recursiveSolve((OpExp)solveIndex.index, memLoc3 + tempVarsOffset, tempReg1, tempReg2);
+                }
+                else if (solveIndex.index instanceof Exp)
+                {
+                    OpExp imLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, solveIndex.index);
+                    recursiveSolve(imLazy, memLoc3 + tempVarsOffset, tempReg1, tempReg2);
+                }
+
+                addCommand("LD " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc3 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+                assignReg(tempReg1, memoryMapVariables.get(getVarName(targetVar)));
+                addCommand("LD " + String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2)+ "(" + String.valueOf(tempReg1) + ")");
+                addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
         }
         else if(toSolve.left instanceof OpExp)
         {
             recursiveSolve((OpExp) toSolve.left, memLoc1 + tempVarsOffset, tempReg1, tempReg2);
+        }
+        else if(toSolve.left instanceof CallExp)
+        {
+            CallExp theCall = (CallExp) toSolve.left;
+
+            if(theCall.func.equals("input"))
+            {
+                addCommand("IN " + String.valueOf(tempReg1) + " ,0 ,0");
+                addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
         }
 
         tempVariables.put(String.valueOf(memLoc2), memLoc2 + tempVarsOffset);
@@ -347,12 +448,46 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         }
         else if(toSolve.right instanceof VarExp)
         {
-            addCommand("LD " + String.valueOf(tempReg2) + ", " + memoryMapVariables.get(getVarName((Var) ((VarExp) toSolve.right).variable)) + "(" + String.valueOf(MemStartReg) + ")");
-            addCommand("ST " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            Var targetVar = (Var) ((VarExp) toSolve.right).variable;
+            if(targetVar instanceof SimpleVar)
+            {
+                addCommand("LD " + String.valueOf(tempReg2) + ", " + memoryMapVariables.get(getVarName(targetVar)) + "(" + String.valueOf(MemStartReg) + ")");
+                addCommand("ST " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
+            else if(targetVar instanceof IndexVar)
+            {
+                IndexVar solveIndex = (IndexVar) targetVar;
+                Integer memLoc4 = currentTemp;
+                currentTemp++;
+                if(solveIndex.index instanceof OpExp)
+                {
+                    recursiveSolve((OpExp)solveIndex.index, memLoc4 + tempVarsOffset, tempReg1, tempReg2);
+                }
+                else if (solveIndex.index instanceof Exp)
+                {
+                    OpExp imLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, solveIndex.index);
+                    recursiveSolve(imLazy, memLoc4 + tempVarsOffset, tempReg1, tempReg2);
+                }
+
+                addCommand("LD " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc4 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+                assignReg(tempReg1, memoryMapVariables.get(getVarName(targetVar)));
+                addCommand("LD " + String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2)+ "(" + String.valueOf(tempReg1) + ")");
+                addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
         }
         else if(toSolve.right instanceof OpExp)
         {
             recursiveSolve((OpExp) toSolve.right, memLoc2 + tempVarsOffset, tempReg1, tempReg2);
+        }
+        else if(toSolve.right instanceof CallExp)
+        {
+            CallExp theCall = (CallExp) toSolve.right;
+
+            if(theCall.func.equals("input"))
+            {
+                addCommand("IN " + String.valueOf(tempReg2) + " ,0 ,0");
+                addCommand("ST " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
+            }
         }
 
         addCommand("LD " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
@@ -420,6 +555,7 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
             addCommand("LD " + String.valueOf(resultReg) + ", " + String.valueOf(returnState + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
         }
         tempVariables.clear();
+        currentTemp = 0;
 
     }
 

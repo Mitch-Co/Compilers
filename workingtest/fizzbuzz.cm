@@ -1,0 +1,73 @@
+void main(void)
+{
+    int output[101];
+    int i; int j;
+    int fizz; int buzz; int fizzbuzz;
+    int isFizz; int isBuzz; int isFB;
+    int max;
+    int count;
+
+    fizz = 0 - 1;
+    buzz = 0 - 2;
+    fizzbuzz = 0 - 3;
+    max = 100;
+    count = 1;
+
+    i = 0;
+    j = 0;
+    
+    while(count < max)
+    {
+        isFizz = 0;
+        isBuzz = 0;
+        isFB = 0;
+        i = 0;
+        j = 0;
+        while(i < count)
+        {
+            i = i + 3;
+        }
+        while(j < count)
+        {
+            j = j + 5;
+        }
+        
+        if(i == count)
+        {
+            isFizz = 1;
+        }
+        if(j == count)
+        {
+            isBuzz = 1;
+        }
+        if(isFizz == 1)
+        {
+            if(isBuzz == 1)
+            {
+                isFB = 1;
+            }
+        }
+
+        output[count] = count;
+        if(isFB == 1)
+        {
+            output[count] = fizzbuzz;
+        }
+        else
+        {
+            if(isBuzz == 1)
+            {
+                output[count] = buzz;
+            }
+            else
+            {
+                if(isFizz == 1)
+                {
+                    output[count] = fizz;
+                }
+            }
+        }
+        
+        count = count + 1;
+    }
+}
