@@ -22,29 +22,36 @@ class CM {
     try {
       parser p = new parser(new Lexer(new FileReader(argv[0])));
       Absyn result = (Absyn)(p.parse().value);      
-      if (SHOW_TREE && result != null) {
-         System.out.println("The abstract syntax tree is:");
-         ShowTreeVisitor visitor = new ShowTreeVisitor();
-         result.accept(visitor, 0); 
-         MitchsMarvelousMachinecodeMaker MMMM = new MitchsMarvelousMachinecodeMaker();
-         String output = MMMM.generateAssembly(result);
-         
-         try 
-         {
-          FileWriter fp = new FileWriter(argv[0].substring(0,argv[0].length() - 3) + ".tm");
-          fp.write(output);
-          fp.close();
-          
-         }
-         catch (Exception e)
-         {
+      if (result != null) {
+        if(!p.hasErrors)
+        {
+          if(argv.length < 2 || argv[1].equals("-a"))
+          {
+            System.out.println("The abstract syntax tree is:");
+            ShowTreeVisitor visitor = new ShowTreeVisitor();
+            result.accept(visitor, 0); 
+          }
 
-         }
-         
+          MitchsMarvelousMachinecodeMaker MMMM = new MitchsMarvelousMachinecodeMaker();
+          String output = MMMM.generateAssembly(result);
 
-         System.out.println("\nASSEMBLY:");
-         System.out.println(output);
-
+          if(argv.length < 2 || argv[1].equals("-c"))
+          {
+            try 
+            {
+             FileWriter fp = new FileWriter(argv[0].substring(0,argv[0].length() - 3) + ".tm");
+             fp.write(output);
+             fp.close();
+             System.out.println("\nASSEMBLY:");
+             System.out.println(output);
+             System.out.println("\nOutput saved in " + argv[0].substring(0,argv[0].length() - 3) + ".tm\n");
+            }
+            catch (Exception e)
+            {
+              
+            }
+          }
+        }
       }
     } catch (Exception e) {
       /* do cleanup here -- possibly rethrow e */
