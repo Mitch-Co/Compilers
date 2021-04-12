@@ -1,0 +1,9 @@
+/*
+    1.cm: A very basic C minus program
+*/
+
+void main(void)
+{
+    int i;
+    i = 2;
+}

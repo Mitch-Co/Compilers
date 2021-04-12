@@ -378,7 +378,7 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
         }
     }
 
-    // Do you think god stays in heaven because he too lives in fear of what he's created?
+    // Im sorry for making this...
     public boolean recursiveSolve(OpExp toSolve, Integer resultMem, Integer tempReg1, Integer tempReg2)
     {
 
@@ -420,7 +420,8 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
                 }
 
                 addCommand("LD " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc3 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
-                addCommand("LD " + String.valueOf(tempReg1) + ", " + memoryMapVariables.get(getVarName(targetVar)) + "(" + String.valueOf(tempReg2) + ")");
+                assignReg(tempReg1, memoryMapVariables.get(getVarName(targetVar)));
+                addCommand("LD " + String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2)+ "(" + String.valueOf(tempReg1) + ")");
                 addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc1 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
             }
         }
@@ -460,16 +461,18 @@ public class MitchsMarvelousMachinecodeMaker implements AbsynVisitor {
                 currentTemp++;
                 if(solveIndex.index instanceof OpExp)
                 {
+                    addCommand("OPEX");
                     recursiveSolve((OpExp)solveIndex.index, memLoc4 + tempVarsOffset, tempReg1, tempReg2);
                 }
                 else if (solveIndex.index instanceof Exp)
                 {
+                    addCommand("EXPERS");
                     OpExp imLazy = new OpExp(-1,-1, new IntExp(-1, -1, 0), OpExp.PLUS, solveIndex.index);
                     recursiveSolve(imLazy, memLoc4 + tempVarsOffset, tempReg1, tempReg2);
                 }
-
                 addCommand("LD " + String.valueOf(tempReg2) + ", " + String.valueOf(memLoc4 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
-                addCommand("LD " + String.valueOf(tempReg1) + ", " + memoryMapVariables.get(getVarName(targetVar)) + "(" + String.valueOf(tempReg2) + ")");
+                assignReg(tempReg1, memoryMapVariables.get(getVarName(targetVar)));
+                addCommand("LD " + String.valueOf(tempReg1) + ", " + String.valueOf(tempReg2)+ "(" + String.valueOf(tempReg1) + ")");
                 addCommand("ST " + String.valueOf(tempReg1) + ", " + String.valueOf(memLoc2 + tempVarsOffset) + "(" + String.valueOf(MemStartReg) + ")");
             }
         }

@@ -1,0 +1,92 @@
+/*
+    4.cm: A C minus program that computes up to 300 digits of FizzBuzz
+    The program stores all values in output array before outputting to screen 
+    
+    FizBuzz is game where a group of people count up from 1
+    Every time a number is reached that is evenly divisible by 3, the number is replaced with "Fizz"
+    Every time a number is reached that is evenly divisible by 5, the number is replaced with "Buzz"
+    Every time a number is reached that is evenly divisible by 3 and 5, the number is replaced with "FizzBuzz"
+
+    Because strings don't exist in C Minus, -1 is Fizz, -2 is Buzz, -3 is FizzBuzz
+*/
+
+void main(void)
+{
+    int output[300];
+    int i; int j;
+    int fizz; int buzz; int fizzbuzz;
+    int isFizz; int isBuzz; int isFB;
+    int max;
+    int count;
+
+    fizz = 0 - 1;
+    buzz = 0 - 2;
+    fizzbuzz = 0 - 3;
+    max = input();
+    count = 1;
+
+    i = 0;
+    j = 0;
+    
+    while(count < max)
+    {
+        isFizz = 0;
+        isBuzz = 0;
+        isFB = 0;
+        i = 0;
+        j = 0;
+        while(i < count)
+        {
+            i = i + 3;
+        }
+        while(j < count)
+        {
+            j = j + 5;
+        }
+        
+        if(i == count)
+        {
+            isFizz = 1;
+        }
+        if(j == count)
+        {
+            isBuzz = 1;
+        }
+        if(isFizz == 1)
+        {
+            if(isBuzz == 1)
+            {
+                isFB = 1;
+            }
+        }
+
+        output[count] = count;
+        if(isFB == 1)
+        {
+            output[count] = fizzbuzz;
+        }
+        else
+        {
+            if(isBuzz == 1)
+            {
+                output[count] = buzz;
+            }
+            else
+            {
+                if(isFizz == 1)
+                {
+                    output[count] = fizz;
+                }
+            }
+        }
+        
+        count = count + 1;
+    }
+
+    count = 1;
+    while(count < max)
+    {
+        output(output[count]);
+        count = count + 1;
+    }
+}

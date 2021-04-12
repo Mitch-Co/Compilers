@@ -1,0 +1,13 @@
+/*
+    2.cm: A more complex C Minus program
+    Computes 20 / 4 in an inefficent way
+*/
+
+int x;
+
+void main(void)
+{
+    x = 20;
+    x = (x / 2) / 2;
+    output(x);
+}
